@@ -18,3 +18,4 @@ zeroconf
 bidict
 python-magic
 pyudev
+git+ssh://git@github.com/TojikCZ/v4l2py.git@master#egg=v4l2py

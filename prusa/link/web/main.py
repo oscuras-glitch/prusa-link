@@ -1,7 +1,5 @@
 """Main pages and core API"""
-import base64
 import logging
-from io import BytesIO
 from os import listdir
 from os.path import basename, getmtime, getsize, join
 from socket import gethostname
@@ -14,6 +12,7 @@ from poorwsgi.digest import check_digest
 from poorwsgi.response import (EmptyResponse, FileResponse, JSONResponse,
                                Response)
 from prusa.connect.printer import __version__ as sdk_version
+
 from prusa.connect.printer.const import Source, State
 from prusa.connect.printer.metadata import get_metadata
 
@@ -489,29 +488,3 @@ def api_system_commands_execute(req, source, action):
                             message='Available sources: "core"')
 
     return JSONResponse(core=[], custom=[])
-
-
-@app.route("/api/camera", method=state.METHOD_POST)
-@check_api_digest
-def camera_capture(req):
-    """Capture an image from a camera and return it in endpoint"""
-    camera = app.daemon.prusa_link.printer.camera
-    if not camera:
-        return JSONResponse(status_code=state.HTTP_CONFLICT,
-                            message="Camera is not available")
-
-    resolution = req.json.get('resolution')
-    if resolution:
-        width = resolution.get('width')
-        height = resolution.get('height')
-    else:
-        width = 640
-        height = 640
-
-    camera.resolution = (width, height)
-    byte_stream = BytesIO()
-
-    camera.capture(byte_stream, 'png')
-
-    coded = base64.b64encode(byte_stream.getvalue())
-    return Response(base64.decodebytes(coded), content_type='image/png')
